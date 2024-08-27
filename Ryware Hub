@@ -21,17 +21,12 @@ local Tab = Window:MakeTab({
 
 -- Add a section to the tab
 local Section = Tab:AddSection({
-    Name = "Welcome to GSFHUB"
+    Name = "Welcome to RywareHub"
 })
 
 -- Add a section to the tab
 local Section = Tab:AddSection({
-    Name = "This Protection To Hub Private For Brookhaven RP"
-})
-
--- Add a section to the tab
-local Section = Tab:AddSection({
-    Name = "Versão Atualizada"
+    Name = "Script By Ghost"
 })
 
 -- Create a tab
@@ -1087,7 +1082,7 @@ Tab:AddButton({
 OrionLib:MakeNotification({
     Name = "Bloody Hub",
     Content = "Credits: By Ghostx",
-    Image = "rbxassetid://18964815634",
+    Image = "rbxassetid://105287647159484",
     Time = 5
 })
 
@@ -1103,7 +1098,7 @@ Toggle.BackgroundColor3 = Color3.fromRGB(25, 25, 25)  -- Black background color
 Toggle.BackgroundTransparency = 1  -- Set the button transparency to 
 Toggle.Position = UDim2.new(0, 5, 0.454706937, 0)
 Toggle.Size = UDim2.new(0, 40, 0, 40)  -- Smaller size for a compact circular button
-Toggle.Image = "rbxassetid://18964815634"  -- Replace IMAGE_ID with your image asset ID
+Toggle.Image = "rbxassetid://105287647159484"  -- Replace IMAGE_ID with your image asset ID
 Toggle.Draggable = true
 
 local Corner = Instance.new("UICorner")
