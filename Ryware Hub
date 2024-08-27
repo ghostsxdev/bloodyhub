@@ -7,7 +7,7 @@ local Window = OrionLib:MakeWindow({
     HidePremium = false,
     SaveConfig = true,
     IntroText = "Ryware Hub",
-    IntroIcon = "rbxassetid://18964815634",
+    IntroIcon = "rbxassetid://105287647159484",
     ConfigFolder = "OrionTest"
     
 })
