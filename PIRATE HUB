@@ -1,0 +1,1271 @@
+-- Load the Orion Library
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Xtentacion178/Dbbdbr/main/Rbsbbs"))()
+
+-- Create a window
+local Window = OrionLib:MakeWindow({
+    Name = "PIRATE HUB V0.1 BROOKHAVEN RP🏠",
+    HidePremium = false,
+    SaveConfig = true,
+    IntroText = "PIRATE HUB",
+    IntroIcon = "rbxassetid://",
+    ConfigFolder = "OrionTest"
+    
+})
+
+
+-- Create a tab
+local Tab = Window:MakeTab({
+    Name = "Informações",
+    Icon = "rbxassetid://118979441318405",
+    PremiumOnly = false
+})
+
+-- Add a section to the tab
+local Section = Tab:AddSection({
+    Name = "Informações do script"
+})
+
+-- Add a section to the tab
+local Section = Tab:AddSection({
+    Name = "Criador Ghosty/dark"
+})
+
+-- Add a section to the tab
+local Section = Tab:AddSection({
+    Name = "Desenvolvedores arrowpro,dark,joko"
+})
+
+-- Create a tab
+local Tab = Window:MakeTab({
+    Name = "👾 - Main Troll",
+    Icon = "rbxassetid://18904410739",
+    PremiumOnly = false
+})
+
+-- Add a section to the tab
+local Section = Tab:AddSection({
+    Name = "TROLL"
+})
+
+local function getPlayerNames()
+    local players = game:GetService("Players"):GetPlayers()
+    local playerNames = {}
+    for _, player in ipairs(players) do
+        table.insert(playerNames, player.Name)
+    end
+    return playerNames
+end
+
+local selectedPlayer
+local teleportLoop
+local playerDropdown
+
+local selectedPlayer = nil
+local isViewing = false
+local camera = game.Workspace.CurrentCamera
+
+-- VariÃ¡veis de controle
+local playerNameInitials = ""
+local isActive = {
+    teleport = false,
+    spin = false,
+    fling = false,
+    rotate = false,
+    view = false -- Adicionada a variÃ¡vel para visualizaÃ§Ã£o
+}
+local connections = {
+    teleport = nil,
+    spin = nil,
+    fling = nil,
+    rotate = nil,
+    view = nil -- Adicionada a conexÃ£o para visualizaÃ§Ã£o
+}
+local viewEnabled = false
+local selectedViewPlayer = nil
+local characterAddedConnection = nil
+
+-- FunÃ§Ã£o para encontrar o jogador pelo nome (usando iniciais)
+local function getPlayerByInitials(initials)
+    initials = string.upper(initials)
+    local Players = game:GetService("Players")
+    for _, player in ipairs(Players:GetPlayers()) do
+        if string.sub(player.Name:upper(), 1, #initials) == initials then
+            return player
+        end
+    end
+    return nil
+end
+
+-- FunÃ§Ã£o para iniciar o loop de rotaÃ§Ã£o (mortal)
+local function startSpinLoop()
+    local RunService = game:GetService("RunService")
+    local LocalPlayer = game.Players.LocalPlayer
+
+    local function applySpin()
+        if isActive.spin then
+            local HumanoidRootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if HumanoidRootPart then
+                -- Remove qualquer BodyAngularVelocity existente
+                for _, v in ipairs(LocalPlayer.Character:GetChildren()) do
+                    if v:IsA("BodyAngularVelocity") then
+                        v:Destroy()
+                    end
+                end
+
+                -- Cria um novo BodyAngularVelocity para rotaÃ§Ã£o rÃ¡pida diagonal
+                local Spin = Instance.new("BodyAngularVelocity")
+                Spin.Parent = HumanoidRootPart
+                Spin.MaxTorque = Vector3.new(math.huge, math.huge, math.huge) -- Permite rotaÃ§Ã£o ilimitada em todos os eixos
+                Spin.AngularVelocity = Vector3.new(900, 900, 900) -- Ajuste a velocidade conforme necessÃ¡rio
+            end
+        end
+    end
+
+    connections.spin = RunService.Heartbeat:Connect(applySpin)
+end
+
+-- FunÃ§Ã£o para parar o loop de rotaÃ§Ã£o
+local function stopSpinLoop()
+    if connections.spin then
+        connections.spin:Disconnect()
+        connections.spin = nil
+    end
+
+    local HumanoidRootPart = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if HumanoidRootPart then
+        for _, v in ipairs(HumanoidRootPart:GetChildren()) do
+            if v:IsA("BodyAngularVelocity") then
+                v:Destroy()
+            end
+        end
+    end
+end
+
+-- FunÃ§Ã£o para iniciar o loop de fling
+local function startFlingLoop()
+    local RunService = game:GetService("RunService")
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    local forceMagnitude = 5000000
+
+    connections.fling = RunService.Heartbeat:Connect(function()
+        if isActive.fling and playerNameInitials ~= "" then
+            local targetPlayer = getPlayerByInitials(playerNameInitials)
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local direction = (targetPlayer.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Unit
+                LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 0) -- Move 0 unit forward
+                targetPlayer.Character.HumanoidRootPart.Velocity = direction * forceMagnitude
+            end
+        end
+    end)
+end
+
+-- FunÃ§Ã£o para parar o loop de fling
+local function stopFlingLoop()
+    if connections.fling then
+        connections.fling:Disconnect()
+        connections.fling = nil
+    end
+end
+
+-- FunÃ§Ã£o para iniciar o loop de teleporte
+local function startTeleportLoop()
+    local RunService = game:GetService("RunService")
+    local LocalPlayer = game.Players.LocalPlayer
+    local direction = 1
+
+    connections.teleport = RunService.Heartbeat:Connect(function()
+        if isActive.teleport then
+            local HumanoidRootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if HumanoidRootPart then
+                local currentPosition = HumanoidRootPart.Position
+                HumanoidRootPart.CFrame = HumanoidRootPart.CFrame + Vector3.new(0, direction, 0)
+                direction = direction * -1
+            end
+        end
+    end)
+end
+
+-- FunÃ§Ã£o para parar o loop de teleporte
+local function stopTeleportLoop()
+    if connections.teleport then
+        connections.teleport:Disconnect()
+        connections.teleport = nil
+    end
+end
+
+-- FunÃ§Ã£o para iniciar o loop de rotaÃ§Ã£o completa
+local function startRotateLoop()
+    local RunService = game:GetService("RunService")
+    local LocalPlayer = game.Players.LocalPlayer
+
+    local function applyRotation()
+        if isActive.rotate then
+            local HumanoidRootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if HumanoidRootPart then
+                HumanoidRootPart.CFrame = HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(0), 0)
+            end
+        end
+    end
+
+    connections.rotate = RunService.Heartbeat:Connect(applyRotation)
+end
+
+-- FunÃ§Ã£o para parar o loop de rotaÃ§Ã£o completa
+local function stopRotateLoop()
+    if connections.rotate then
+        connections.rotate:Disconnect()
+        connections.rotate = nil
+    end
+end
+
+-- FunÃ§Ã£o para ativar/desativar visualizaÃ§Ã£o
+local function toggleView(enabled)
+    if enabled then
+        if selectedViewPlayer then
+            local player = selectedViewPlayer
+            if player then
+                game.Workspace.CurrentCamera.CameraSubject = player.Character
+                if characterAddedConnection then
+                    characterAddedConnection:Disconnect()
+                end
+                characterAddedConnection = player.CharacterAdded:Connect(function(character)
+                    game.Workspace.CurrentCamera.CameraSubject = character
+                end)
+                OrionLib:MakeNotification({
+                    Name = "Visualizando " .. player.Name,
+                    Content = "VocÃª estÃ¡ visualizando o jogador: " .. player.Name,
+                    Image = "rbxassetid://17527279121",
+                    Time = 6
+                })
+            else
+                print("Jogador nÃ£o encontrado.")
+                viewEnabled = false
+            end
+        else
+            print("Nenhum jogador selecionado para a visualizaÃ§Ã£o.")
+            viewEnabled = false
+        end
+    else
+        if characterAddedConnection then
+            characterAddedConnection:Disconnect()
+            characterAddedConnection = nil
+        end
+        game.Workspace.CurrentCamera.CameraSubject = game.Players.LocalPlayer.Character
+    end
+end
+
+-- FunÃ§Ã£o para encontrar jogador pelo nome parcial ou apelido
+local function findPlayerByPartialNameOrNickname(partialName)
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if player.Name:lower():find(partialName:lower(), 1, true) or (player.DisplayName and player.DisplayName:lower():find(partialName:lower(), 1, true)) then
+            return player
+        end
+    end
+    return nil
+end
+
+Tab:AddButton({
+  Name = "Kill",
+Callback = function()local args = {
+    [1] = "PickingTools",
+    [2] = "Couch"
+}
+ 
+game:GetService("ReplicatedStorage").RE:FindFirstChild("1Too1l"):InvokeServer(unpack(args))local player = game.Players.LocalPlayer
+
+local function equiparTools()
+    local tools = player.Backpack:GetChildren()
+    for _, tool in ipairs(tools) do
+        if tool:IsA("Tool") then
+            player.Character.Humanoid:EquipTool(tool)
+        end
+    end
+end
+
+equiparTools()
+
+local tempoParaParar = 1
+local tempoInicial = tick()
+
+while wait(0.1) do
+    equiparTools()
+    if tick() - tempoInicial > tempoParaParar then
+        break
+    end
+end
+        if selectedPlayer then
+            local targetPlayer = game:GetService("Players"):FindFirstChild(selectedPlayer)
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                teleportLoop = game:GetService("RunService").Heartbeat:Connect(function()
+                    local playerCharacter = game.Players.LocalPlayer.Character
+                    if playerCharacter and playerCharacter:FindFirstChild("HumanoidRootPart") then
+                        playerCharacter.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+                        wait(0.1)
+                        playerCharacter.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(75, -495, 6875))
+                        wait(0.1)
+                    end
+                end)
+            end
+        end
+    end
+})
+
+playerDropdown = Tab:AddDropdown({
+    Name = "Target",
+    Default = "1",
+    Options = getPlayerNames(),
+    Callback = function(Value)
+        selectedPlayer = Value
+        if teleportLoop then
+            teleportLoop:Disconnect()
+            teleportLoop = nil
+        end
+    end    
+})
+
+Tab:AddToggle({
+  Name = "View",
+  Callback = function(state)
+    isViewing = state
+    if isViewing and selectedPlayer then
+      local targetPlayer = game:GetService("Players"):FindFirstChild(selectedPlayer)
+      if targetPlayer then
+        local character = targetPlayer.Character
+        if character then
+          local targetCamera = character:FindFirstChild("HumanoidRootPart")
+          if targetCamera then
+            camera.CameraSubject = targetCamera
+            camera.CameraType = Enum.CameraType.Custom
+          end
+        end
+      end
+    else
+      camera.CameraSubject = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+      camera.CameraType = Enum.CameraType.Custom
+    end
+  end
+})
+
+Tab:AddButton({
+    Name = "🔥Goto",
+    Callback = function()
+        if selectedPlayer then
+            local targetPlayer = game:GetService("Players"):FindFirstChild(selectedPlayer)
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local playerCharacter = game.Players.LocalPlayer.Character
+                if playerCharacter and playerCharacter:FindFirstChild("HumanoidRootPart") then
+                    playerCharacter.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+                    wait(0.9)
+                    playerCharacter.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(0, 0, 0))
+                end
+            end
+        end
+    end
+})
+
+Tab:AddButton({
+    Name = "🔱 - Fling All",
+    Callback = function()
+        loadstring(game:HttpGet("https://pastebin.com/raw/zqyDSUWX"))()
+    end    
+})
+
+-- Add a section to the tab
+local Section = Tab:AddSection({
+    Name = "Small Avatar"
+})
+
+Tab:AddButton({
+    Name = "Character Size Up",
+    Callback = function()
+        local args = {
+            [1] = "CharacterSizeUp",
+            [2] = 1
+        }
+        -- Envia um pedido ao servidor para diminuir o tamanho do personagem
+        local remoteEvent = game:GetService("ReplicatedStorage").RE:FindFirstChild("1Clothe1s")
+        if remoteEvent then
+            remoteEvent:FireServer(unpack(args))
+        else
+            warn("Evento remoto '1Clothe1s' nÃ£o encontrado em ReplicatedStorage.RE")
+        end
+    end
+})
+
+Tab:AddButton({
+    Name = "Character Size Down",
+    Callback = function()
+        local args = {
+            [1] = "CharacterSizeDown",
+            [2] = 4
+        }
+        -- Envia um pedido ao servidor para diminuir o tamanho do personagem
+        local remoteEvent = game:GetService("ReplicatedStorage").RE:FindFirstChild("1Clothe1s")
+        if remoteEvent then
+            remoteEvent:FireServer(unpack(args))
+        else
+            warn("Evento remoto '1Clothe1s' nÃ£o encontrado em ReplicatedStorage.RE")
+        end
+    end
+})
+
+-- FunÃ§Ã£o para ativar automaticamente o cÃ³digo especificado
+local function activateCode()
+    local args = {
+        [1] = "PickingTools",
+        [2] = "Couch"
+    }
+    local remoteFunction = game:GetService("ReplicatedStorage").RE:FindFirstChild("1Too1l")
+    if remoteFunction then
+        remoteFunction:InvokeServer(unpack(args))
+    else
+        warn("FunÃ§Ã£o remota '1Too1l' nÃ£o encontrada em ReplicatedStorage.RE")
+    end
+end
+
+-- Chamar a funÃ§Ã£o para ativar automaticamente o cÃ³digo especificado
+activateCode()
+
+-- Add a section to the tab
+local Section = Tab:AddSection({
+    Name = "Protection"
+})
+
+-- VariÃ¡vel para armazenar o estado da proteÃ§Ã£o
+local voidProtectionEnabled = false
+
+-- FunÃ§Ã£o para ativar a proteÃ§Ã£o contra o vazio
+local function ActivateVoidProtection()
+    voidProtectionEnabled = true
+    -- Definindo FallenPartsDestroyHeight para NaN para prevenir a destruiÃ§Ã£o
+    game.Workspace.FallenPartsDestroyHeight = -99999999999
+end
+
+Tab:AddButton({
+    Name = "Void Protection",
+    Callback = function()
+        if not voidProtectionEnabled then
+            ActivateVoidProtection()
+            print("Void protection activated.")
+        else
+            print("Void protection is already active.")
+        end
+    end
+})
+
+-- Criar a aba "Flings"
+local FlingsTab = Window:MakeTab({
+    Name = "Flings [NEW]",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+-- Criar a seção "Seção Troll Beta" na aba "Flings"
+local FlingsSection = FlingsTab:AddSection({
+    Name = "Seção Troll Beta"
+})
+
+-- Função para realizar o "Fling Avançado" com o item 'Couch'
+local selectedKillAdvancedPlayer = nil
+local couchEquipped = false
+
+local function killAdvancedPlayer()
+    if selectedKillAdvancedPlayer then
+        local player = game.Players:FindFirstChild(selectedKillAdvancedPlayer)
+        if player then
+            -- Equipa o item 'Couch' no inventário se ainda não estiver equipado
+            local backpack = game.Players.LocalPlayer.Backpack
+            if backpack and not couchEquipped then
+                local couch = backpack:FindFirstChild("Couch")
+                if couch then
+                    game.Players.LocalPlayer.Character.Humanoid:EquipTool(couch)
+                    couchEquipped = true
+                else
+                    print("O item 'Couch' não foi encontrado no seu inventário.")
+                end
+            end
+            
+            -- Looping de teleportes no jogador selecionado da lista
+            while true do
+                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame
+                wait(0.0) -- Intervalo entre cada teleporte, ajuste conforme necessário
+                
+                -- Verifica se o jogador sentou no 'Couch' e realiza o teleporte para o céu
+                if player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.SeatPart then
+                    player.Character.HumanoidRootPart.CFrame = CFrame.new(0, 0, 0) -- Teleporta para cima
+                    wait(0.0) -- Espera um pouco antes de teleportar de volta para evitar bugs
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(55931, 12551, 18083) -- Teleporta de volta para a posição original
+                    break -- Sai do loop após teleportar de volta
+                end
+            end
+            
+            -- Remove o item 'Couch' da mão do jogador após o teleporte para o céu
+            if couchEquipped then
+                local backpack = game.Players.LocalPlayer.Backpack
+                if backpack then
+                    local couch = backpack:FindFirstChild("Couch")
+                    if couch then
+                        couch.Parent = nil -- Remove o 'Couch' do inventário
+                        couchEquipped = false
+                    end
+                end
+            end
+        else
+            print("Jogador não encontrado.")
+        end
+    else
+        print("Nenhum jogador selecionado para o Bring Avançado.")
+    end
+end
+
+-- Adicionar um botão "Fling [BETA]" à seção "Seção Troll Beta"
+FlingsSection:AddButton({
+    Name = "Fling [Bug Fixed]",
+    Description = "Equipa o item 'Couch' e teleporta o jogador selecionado.",
+    Callback = function()
+        killAdvancedPlayer()
+    end
+})
+
+-- Adicionar uma lista de seleção de jogadores para "Fling "
+local killAdvancedPlayerList = {}
+for _, player in ipairs(game.Players:GetPlayers()) do
+    table.insert(killAdvancedPlayerList, player.Name)
+end
+
+FlingsSection:AddDropdown({
+    Name = "Selecione o Jogador para Fling BETA",
+    Description = "Selecione o jogador alvo para o Fling [BETA]",
+    Options = killAdvancedPlayerList,
+    Callback = function(playerName)
+        selectedKillAdvancedPlayer = playerName
+    end
+})
+
+-- Bring All Button Function
+local isBringAllEnabled = false
+
+local function toggleBringAll()
+    isBringAllEnabled = not isBringAllEnabled
+    if isBringAllEnabled then
+        print("Bring all activated!")
+        for i = 1, 10 do
+            for _, player in ipairs(game.Players:GetPlayers()) do
+                local character = game.Players.LocalPlayer.Character
+                if character and character:FindFirstChild("HumanoidRootPart") then
+                    character:FindFirstChild("HumanoidRootPart").CFrame = player.Character.HumanoidRootPart.CFrame
+                    wait(0.0)
+                end
+            end
+        end
+        print("Bring all completed!")
+        isBringAllEnabled = false
+    else
+        print("Bring all deactivated!")
+    end
+end
+
+-- Add the "Bring All" button to the Flings section
+FlingsSection:AddButton({
+    Name = "Bring All [SENDO PROGRAMADO]",
+    Description = "Teleport to all players 10 times",
+    Callback = function()
+        toggleBringAll()
+    end
+})
+
+-- Add buttons to the Flings tab
+FlingsTab:AddButton({
+    Name = "Get Sofa Beta",
+    Description = "It's in beta, there are still some bugs",
+    Callback = function()
+        local args = {
+            [1] = "PickingTools",
+            [2] = "Couch"
+        }
+        game:GetService("ReplicatedStorage").RE:FindFirstChild("1Too1l"):InvokeServer(unpack(args))
+        print('Hello!')
+    end
+})
+
+-- Kill Player Button Function
+local selectedKillPlayer = nil
+
+local function killPlayer()
+    if selectedKillPlayer then
+        local player = nil
+        -- Verificar se o nome completo do jogador foi inserido
+        if game.Players:FindFirstChild(selectedKillPlayer) then
+            player = game.Players:FindFirstChild(selectedKillPlayer)
+        else
+            -- Se não, procurar pelos jogadores que têm as iniciais do nome inseridas
+            for _,plr in ipairs(game.Players:GetPlayers()) do
+                if string.sub(plr.Name, 1, #selectedKillPlayer) == selectedKillPlayer then
+                    player = plr
+                    break
+                end
+            end
+        end
+        
+        if player then
+            for i = 0, 10 do
+                local character = game.Players.LocalPlayer.Character
+                if character and character:FindFirstChild("HumanoidRootPart") then
+                    character:FindFirstChild("HumanoidRootPart").CFrame = player.Character.HumanoidRootPart.CFrame
+                end
+                wait(0.0)
+            end
+            local character = game.Players.LocalPlayer.Character
+            if character then
+                local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+                if humanoidRootPart then
+                    humanoidRootPart.CFrame = CFrame.new(0, 99999999999999999999, 0)
+                    print("Player teleported to 9999999 meters above!")
+                end
+            end
+            
+            -- Wait for 5 seconds after kill and teleport to Agency Base 1 five times
+            wait(5)
+            for i = 1, 5 do
+                teleportToAgencyBase1()
+                wait(1) -- Wait for 1 second between each teleport
+            end
+        else
+            print("Player not found.")
+        end
+    else
+        print("No player selected to kill.")
+    end
+end
+
+-- Add the modified Kill Player button to the Flings tab with a textbox for player name input
+FlingsTab:AddButton({
+    Name = "Kill Player",
+    Description = "Kills the entered player and teleports you to Agency Base 1 after 5 seconds",
+    Callback = function()
+        killPlayer()
+    end
+})
+
+-- Add a textbox for entering the player's name
+FlingsTab:AddTextbox({
+    Name = "Enter Player Name",
+    Description = "Enter the name or initials of the player you want to kill",
+    Default = "",
+    Callback = function(playerName)
+        selectedKillPlayer = playerName
+    end
+})
+
+-- Teleport Tab 
+local TeleportTab = Window:MakeTab({
+    Name = "Teleportes [NEW]",
+    Icon = "rbxassetid://17390185422"
+})
+
+-- Add a section to the tab
+local Section = Tab:AddSection({
+    Name = "Teleporta para os lugares"
+})
+
+-- Teleport to Criminal Button Function
+local function teleportToCriminal()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-119, -28, 235)
+end
+
+TeleportTab:AddButton({
+    Name = "Criminal",
+    Description = "Teleport to Criminal coordinates",
+    Callback = function()
+        teleportToCriminal()
+    end
+})
+
+-- Teleport to House Abandoned Button Function
+local function teleportToHouseAbandoned()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(986, 4, 63)
+end
+
+TeleportTab:AddButton({
+    Name = "House Abandoned",
+    Description = "Teleport to House Abandoned coordinates",
+    Callback = function()
+        teleportToHouseAbandoned()
+    end
+})
+
+-- Teleport to Portal Agency Button Function
+local function teleportToPortalAgency()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(672, 4, -296)
+end
+
+TeleportTab:AddButton({
+    Name = "Portal Agency",
+    Description = "Teleport to Portal Agency coordinates",
+    Callback = function()
+        teleportToPortalAgency()
+    end
+})
+
+-- Teleport to Secret Location Button Function
+local function teleportToSecretLocation()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(505, -75, 143)
+end
+
+TeleportTab:AddButton({
+    Name = "Secret Location",
+    Description = "Teleport to Secret Location coordinates",
+    Callback = function()
+        teleportToSecretLocation()
+    end
+})
+
+-- Teleport to School Button Function
+local function teleportToSchool()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-312, 4, 211)
+end
+
+TeleportTab:AddButton({
+    Name = "Escola",
+    Description = "Teleporta para as coordenadas da Escola",
+    Callback = function()
+        teleportToSchool()
+    end
+})
+
+-- Teleport to Brooks Diner Button Function
+local function teleportToBrooksDiner()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(161, 8, 52)
+end
+
+TeleportTab:AddButton({
+    Name = "Brooks Diner",
+    Description = "Teleporta para as coordenadas do Brooks Diner",
+    Callback = function()
+        teleportToBrooksDiner()
+    end
+})
+
+-- Teleport to Hospital Button Function
+local function teleportToHospital()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-309, 4, 71)
+end
+
+TeleportTab:AddButton({
+    Name = "Hospital",
+    Description = "Teleporta para as coordenadas do Hospital",
+    Callback = function()
+        teleportToHospital()
+    end
+})
+
+-- Teleport to Arch Button Function
+local function teleportToArch()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-589, 141, -59)
+end
+
+TeleportTab:AddButton({
+    Name = "Arco",
+    Description = "Teleporta para as coordenadas do Arco",
+    Callback = function()
+        teleportToArch()
+    end
+})
+
+-- Teleport to Agency Button Function
+local function teleportToAgency()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(179, 4, -464)
+end
+
+-- Create a tab
+local Tab = Window:MakeTab({
+    Name = "NOMES",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+-- Add a section to the tab
+local Section = Tab:AddSection({
+    Name = "ADCIONAR NOME AO PLAYER"
+})
+
+Tab:AddButton({
+  Name = "Name:  UNWELL ",
+  Callback = function()
+    game:GetService("ReplicatedStorage").RE["1RPNam1eTex1t"]:FireServer("RolePlayName","🏴‍☠️ UNWELL 🏴‍☠️")
+  end
+})
+
+Tab:AddButton({
+  Name = "Name: 🏴‍☠️ARROWPRO 🏴‍☠️",
+  Callback = function()
+    game:GetService("ReplicatedStorage").RE["1RPNam1eTex1t"]:FireServer("RolePlayName","🏴‍☠️ ARROWPRO 🏴‍☠️")
+  end
+})
+
+Tab:AddButton({
+  Name = "Name: 🏴‍☠️ ERR0R_666 🏴‍☠️",
+  Callback = function()
+    game:GetService("ReplicatedStorage").RE["1RPNam1eTex1t"]:FireServer("RolePlayName","🏴‍☠️ ERR0R_666 🏴‍☠️")
+  end
+})
+
+Tab:AddButton({
+  Name = "Name: 🏴‍☠️ DARK 🏴‍☠️",
+  Callback = function()
+    game:GetService("ReplicatedStorage").RE["1RPNam1eTex1t"]:FireServer("RolePlayName","🏴‍☠️ DARK 🏴‍☠️")
+  end
+})
+
+Tab:AddButton({
+  Name = "Name: 🏴‍☠️ GHOSTY66 🏴‍☠️",
+  Callback = function()
+    game:GetService("ReplicatedStorage").RE["1RPNam1eTex1t"]:FireServer("RolePlayName","🏴‍☠️ GHOSTY66 🏴‍☠️")
+  end
+})
+
+Tab:AddButton({
+  Name = "Name: 🏴‍☠️ JOKO 🏴‍☠️",
+  Callback = function()
+    game:GetService("ReplicatedStorage").RE["1RPNam1eTex1t"]:FireServer("RolePlayName","🏴‍☠️ JOKO 🏴‍☠️")
+  end
+})
+
+Tab:AddButton({
+  Name = "Name: 🏴‍☠️ ADMIN 🏴‍☠️",
+  Callback = function()
+    game:GetService("ReplicatedStorage").RE["1RPNam1eTex1t"]:FireServer("RolePlayName","🏴‍☠️ MIGUEL 🏴‍☠️")
+  end
+})
+
+Tab:AddButton({
+  Name = "Name: 🏴‍☠️ NotFound🏴‍☠️",
+  Callback = function()
+    game:GetService("ReplicatedStorage").RE["1RPNam1eTex1t"]:FireServer("RolePlayName","🏴‍☠️ NotFound 🏴‍☠️")
+  end
+})
+
+Tab:AddButton({
+  Name = "Name: 🏴‍☠️ PIRATE HACKING🏴‍☠️",
+  Callback = function()
+    game:GetService("ReplicatedStorage").RE["1RPNam1eTex1t"]:FireServer("RolePlayName","🏴‍☠️ PIRATE HAKING 🏴‍☠️")
+  end
+})
+
+Tab:AddButton({
+  Name = "Name: 🏴‍☠️ PIRATE HUB USER🏴‍☠️",
+  Callback = function()
+    game:GetService("ReplicatedStorage").RE["1RPNam1eTex1t"]:FireServer("RolePlayName","🏴‍☠️ PIRATE HUB USER 🏴‍☠️")
+  end
+})
+
+Tab:AddButton({
+  Name = "Name: 🏴‍☠️ MY LORD🏴‍☠️",
+  Callback = function()
+    game:GetService("ReplicatedStorage").RE["1RPNam1eTex1t"]:FireServer("RolePlayName","🏴‍☠️ MY LORD🏴‍☠️")
+  end
+})
+
+Tab:AddButton({
+  Name = "Name: 🏴‍☠️ GOLDEN🏴‍☠️",
+  Callback = function()
+    game:GetService("ReplicatedStorage").RE["1RPNam1eTex1t"]:FireServer("RolePlayName","🏴‍☠️GOLDEN 🏴‍☠️")
+  end
+})
+
+-- Create a tab
+local Tab = Window:MakeTab({
+    Name = "📜 - Scripts",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+-- Add a section to the tab
+local Section = Tab:AddSection({
+    Name = "📜 - Scripts"
+})
+
+Tab:AddButton({
+    Name = "🪙 - InfiniteYield - Cmd",
+    Callback = function()
+      loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+    end    
+})
+
+Tab:AddButton({
+  Name = "⚙️ -  TP Tool",
+  Callback = function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/err0r129/KptHadesBlair/main/Bao.lua"))()
+       end
+})
+
+Tab:AddButton({
+    Name = "🌊 - Fly Gui",
+    Callback = function()
+      loadstring(game:HttpGet("https://scriptblox.com/raw/Universal-Script-Fly-v3-7412"))()
+    end    
+})
+
+Tab:AddButton({
+    Name = "💎 - Nameless Admin - Cmd",
+    Callback = function()
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/FilteringEnabled/NamelessAdmin/main/Source"))()
+    end    
+})
+
+Tab:AddButton({
+    Name = "📍- telekinesis",
+    Callback = function()
+      loadstring(game:HttpGet(('https://raw.githubusercontent.com/SAZXHUB/Control-update/main/README.md'),true))()
+    end    
+})
+
+Tab:AddButton({
+  Name = "🔥 - Redz Hub ",
+  Callback = function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/REDzHUB/REDzHUB/main/REDzHUB"))() 
+  end
+})
+
+Tab:AddButton({
+  Name = " ❄️ - Ice Hub",
+  Callback = function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/JulHubz/JulHub/main/JulHub"))()
+  end
+})
+
+-- Create a tab
+local Tab = Window:MakeTab({
+    Name = "🛍️ - Avatar",
+    Icon = "rbxassetid://10734952036",
+    PremiumOnly = false
+})
+
+-- Add a section to the tab
+local Section = Tab:AddSection({
+    Name = "🎃 - Headless"
+})
+
+Tab:AddButton({
+  Name = "🎃 - Headless",
+  Callback = function()
+    local args = {
+    [1] = "CharacterChange",
+    [2] = {
+        [1] = 1,
+        [2] = 1,
+        [3] = 1,
+        [4] = 1,
+        [5] = 1,
+        [6] = 134082579
+    },
+    [3] = "by:REDz"
+}
+
+game:GetService("ReplicatedStorage").RE:FindFirstChild("1Avata1rOrigina1l"):FireServer(unpack(args))
+  	end    
+})
+
+-- Add a section to the tab
+local Section = Tab:AddSection({
+    Name = "💀 - Korblox"
+})
+
+Tab:AddButton({
+  Name = "🦵 - Left Leg Korblox",
+  Callback = function()
+    local args = {
+    [1] = "CharacterChange",
+    [2] = {
+        [1] = 1,
+        [2] = 1,
+        [3] = 1,
+        [4] = 1,
+        [5] = 139607673,
+        [6] = 1
+    },
+    [3] = "by:REDz"
+}
+
+game:GetService("ReplicatedStorage").RE:FindFirstChild("1Avata1rOrigina1l"):FireServer(unpack(args))
+  	end    
+})
+    
+Tab:AddButton({
+  Name = "🦵 - Right Leg Korblox",
+  Callback = function()
+    local args = {
+    [1] = "CharacterChange",
+    [2] = {
+        [1] = 1,
+        [2] = 1,
+        [3] = 1,
+        [4] = 139607718,
+        [5] = 1,
+        [6] = 1
+    },
+    [3] = "by:REDz"
+}
+
+game:GetService("ReplicatedStorage").RE:FindFirstChild("1Avata1rOrigina1l"):FireServer(unpack(args))
+  	end    
+})
+
+-- Add a section to the tab
+local Section = Tab:AddSection({
+    Name = "💨 - Ice"
+})
+
+Tab:AddButton({
+  Name = "🦿 - Left Leg Ice",
+  Callback = function()
+    local args = {
+    [1] = "CharacterChange",
+    [2] = {
+        [1] = 1,
+        [2] = 1,
+        [3] = 1,
+        [4] = 1,
+        [5] = 139572789,
+        [6] = 1
+    },
+    [3] = "by:REDz"
+}
+
+game:GetService("ReplicatedStorage").RE:FindFirstChild("1Avata1rOrigina1l"):FireServer(unpack(args))
+  	end    
+})
+
+Tab:AddButton({
+  Name = "🦿 - Right Leg Ice",
+  Callback = function()
+      		local args = {
+    [1] = "CharacterChange",
+    [2] = {
+        [1] = 1,
+        [2] = 1,
+        [3] = 1,
+        [4] = 139572888,
+        [5] = 1,
+        [6] = 1
+    },
+    [3] = "by:REDz"
+}
+
+game:GetService("ReplicatedStorage").RE:FindFirstChild("1Avata1rOrigina1l"):FireServer(unpack(args))
+  	end    
+})
+
+-- Add a section to the tab
+local Section = Tab:AddSection({
+    Name = "👔 - Skins"
+})
+
+Tab:AddButton({
+  Name = "🍟 - Potato Gang",
+  Callback = function()
+    local args = {
+    [1] = "CharacterChange",
+    [2] = {
+        [1] = 5392155773,
+        [2] = 5392150804,
+        [3] = 5392146467,
+        [4] = 5392152751,
+        [5] = 5392148570,
+        [6] = 1
+    },
+    [3] = "by:REDz"
+}
+
+game:GetService("ReplicatedStorage").RE:FindFirstChild("1Avata1rOrigina1l"):FireServer(unpack(args))
+end
+})
+
+Tab:AddButton({
+  Name = "🎩 - The Overseer",
+  Callback = function()
+    local args = {
+    [1] = "CharacterChange",
+    [2] = {
+        [1] = 81725326,
+        [2] = 81725366,
+        [3] = 81725392,
+        [4] = 1,
+        [5] = 1,
+        [6] = 1
+    },
+    [3] = "by:REDz"
+}
+
+game:GetService("ReplicatedStorage").RE:FindFirstChild("1Avata1rOrigina1l"):FireServer(unpack(args))
+end
+})
+
+Tab:AddButton({
+  Name = "👺 - Full Korblox Skin",
+  Callback = function()
+    local args = {
+    [1] = "CharacterChange",
+    [2] = {
+        [1] = 139607770,
+        [2] = 139607625,
+        [3] = 139607570,
+        [4] = 139607718,
+        [5] = 139607673,
+        [6] = 1
+    },
+    [3] = "by:REDz"
+}
+
+game:GetService("ReplicatedStorage").RE:FindFirstChild("1Avata1rOrigina1l"):FireServer(unpack(args))
+  	end    
+})
+
+Tab:AddButton({
+  Name = "❄ - Ice Warrior",
+  Callback = function()
+    local args = {
+    [1] = "CharacterChange",
+    [2] = {
+        [1] = 1,
+        [2] = 139572697,
+        [3] = 139572600,
+        [4] = 139572888,
+        [5] = 139572789,
+        [6] = 139572973
+    },
+    [3] = "by:REDz"
+}
+
+game:GetService("ReplicatedStorage").RE:FindFirstChild("1Avata1rOrigina1l"):FireServer(unpack(args))
+  	end    
+})
+
+Tab:AddButton({
+  Name = "🪓 - Jeff The killer",
+  Callback = function()
+    local args = {
+    [1] = "wear",
+    [2] = 14502327402
+}
+
+game:GetService("ReplicatedStorage").RE:FindFirstChild("1Updat1eAvata1r"):FireServer(unpack(args))
+end    
+})
+
+Tab:AddButton({
+  Name = "🟢 - Mario Victim 1",
+  Callback = function()
+    local args = {
+    [1] = "wear",
+    [2] = 14732524763
+}
+
+game:GetService("ReplicatedStorage").RE:FindFirstChild("1Updat1eAvata1r"):FireServer(unpack(args))
+end    
+})
+
+Tab:AddButton({
+  Name = "👁 - Jermas Eyes",
+  Callback = function()
+    local args = {
+    [1] = "wear",
+    [2] = 14817978441
+}
+
+game:GetService("ReplicatedStorage").RE:FindFirstChild("1Updat1eAvata1r"):FireServer(unpack(args))
+end    
+})
+
+Tab:AddButton({
+  Name = "👀 - Angry Munci & scary Eyes",
+  Callback = function()
+    local args = {
+    [1] = "wear",
+    [2] = 14701936208
+}
+
+game:GetService("ReplicatedStorage").RE:FindFirstChild("1Updat1eAvata1r"):FireServer(unpack(args))
+end    
+})
+
+-- Add a section to the tab
+local Section = Tab:AddSection({
+    Name = "🎃Abóboras [Efeitos]"
+})
+
+Tab:AddButton({
+  Name = "Abóbora Com Efeitos Azuis",
+      Callback = function()
+        local args = {
+            [1] = "wear",
+            [2] = 183468963
+        }
+        game:GetService("ReplicatedStorage").RE:FindFirstChild("1Updat1eAvata1r"):FireServer(unpack(args))
+    end
+})
+
+Tab:AddButton({
+  Name = "Abóbora Com Efeitos Verdes",
+      Callback = function()
+        local args = {
+            [1] = "wear",
+            [2] = 132809431
+        }
+        game:GetService("ReplicatedStorage").RE:FindFirstChild("1Updat1eAvata1r"):FireServer(unpack(args))
+    end
+})
+
+OrionLib:MakeNotification({
+    Name = "🌐 - Welcome To Pirate Hub🌐",
+    Content = "Hello, Thanks for using my hub!! If you have any suggestions, please contact me on discord. ass: ghost ❤",
+    Image = "rbxassetid://118979441318405",
+    Time = 5
+})
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ScreenGui"
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+local Toggle = Instance.new("ImageButton")  -- Use ImageButton instead of TextButton
+Toggle.Name = "Toggle"
+Toggle.Parent = ScreenGui
+Toggle.BackgroundColor3 = Color3.fromRGB(25, 25, 25)  -- Black background color
+Toggle.BackgroundTransparency = 1  -- Set the button transparency to 
+Toggle.Position = UDim2.new(0, 0, 0.454706937, 0)
+Toggle.Size = UDim2.new(0, 30, 0, 30)  -- Smaller size for a compact circular button
+Toggle.Image = "rbxassetid://118979441318405"  -- Replace IMAGE_ID with your image asset ID
+Toggle.Draggable = true
+
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0.5, 0)  -- Make the button circular
+Corner.Parent = Toggle
+
+local isOn = false  -- Initial state is off
+
+-- Function to handle the "On" state
+local function onButtonClicked()
+    -- Add your code for what should happen when the button is in the "On" state
+    if gethui():FindFirstChild("Orion") then
+        gethui().Orion.Enabled = not gethui().Orion.Enabled
+    end
+end
+
+-- Function to handle the "Off" state
+local function offButtonClicked()
+    -- Add your code for what should happen when the button is in the "Off" state
+    if gethui():FindFirstChild("Orion") then
+        gethui().Orion.Enabled = not gethui().Orion.Enabled
+    end
+end
+
+Toggle.MouseButton1Click:Connect(function()
+    isOn = not isOn  -- Toggle state
+    if isOn then
+        onButtonClicked()  -- Call the function for "On" state
+    else
+        offButtonClicked()  -- Call the function for "Off" state
+    end
+end)
