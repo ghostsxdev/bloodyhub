@@ -1,11 +1,11 @@
 local IceHub = {}
 local Options = {
-    BrookhavenTitle = "Ghost Hub - Brookhaven RP",
+    BrookhavenTitle = "Ghost Hub",
     TitleColor = Color3.fromRGB(0, 255, 255),
     LabelColor = Color3.fromRGB(255, 255, 255),
-    Owners = {"Soy el torrada"},
-    Discord1 = "Credits: Owner: Ghostwzy7",
-    Discord2 = "Welcome to Ghost Hub"
+    Owners = {"oi"},
+    Discord1 = "a",
+    Discord2 = "Welcom"
 }
 
 local GameTitle = Options.BrookhavenTitle
