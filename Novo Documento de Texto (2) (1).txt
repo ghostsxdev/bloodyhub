@@ -3,10 +3,6 @@ local Options = {
     BrookhavenTitle = "Ghost Hub",
     TitleColor = Color3.fromRGB(0, 255, 255),
     LabelColor = Color3.fromRGB(255, 255, 255),
-    Owners = {"oi"},
-    Discord1 = "a",
-    Discord2 = "Welcom"
-}
 
 local GameTitle = Options.BrookhavenTitle
 local titlecolor = Options.TitleColor
