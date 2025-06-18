@@ -1,11 +1,11 @@
 local IceHub = {}
 local Options = {
-    BrookhavenTitle = "Cartola Hub remake v2.2 : BROOKHAVEN RP",
+    BrookhavenTitle = "Ghost Hub - Brookhaven",
     TitleColor = Color3.fromRGB(0, 255, 255),
     LabelColor = Color3.fromRGB(255, 255, 255),
-    Owners = {"Soy el torrada"},
-    Discord1 = "CRÉDITOS: OWNER:SOY EL TORRADA/DEVS/SOY EL TORRADA",
-    Discord2 = "BEM VINDO MEU NOBRE APROVEITE O SCRIPT"
+    Owners = {"GHOSTWZY7"},
+    Discord1 = "CRÉDITOS: OWNER:GHOSTWZY7",
+    Discord2 = "BEM VINDO AO GHOST HUB"
 }
 
 local GameTitle = Options.BrookhavenTitle
