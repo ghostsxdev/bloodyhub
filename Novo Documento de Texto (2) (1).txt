@@ -4,8 +4,7 @@ local Options = {
     TitleColor = Color3.fromRGB(0, 255, 255),
     LabelColor = Color3.fromRGB(255, 255, 255),
     Owners = {"GHOSTWZY7"},
-    Discord1 = "CRÉDITOS: OWNER:GHOSTWZY7",
-    Discord2 = "BEM VINDO AO GHOST HUB"
+    Discord1 = "CRÉDITOS: OWNER:GHOSTWZY7"
 }
 
 local GameTitle = Options.BrookhavenTitle
@@ -13,7 +12,6 @@ local titlecolor = Options.TitleColor
 local labelcolor = Options.LabelColor
 local owners = Options.Owners
 local discord1 = Options.Discord1
-local discord2 = Options.Discord2
 
 function IceHub.CreateMain()
 	local Library = Instance.new("ScreenGui")
